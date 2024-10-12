@@ -3,6 +3,8 @@ const app = require('./app');
 const parentRoutes = require('./routes/parentRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const learnerRoutes = require('./routes/learnerRoutes');
+const busRoutes = require('./routes/busRoutes');
+
 
 
 require('./config/db')
@@ -16,6 +18,9 @@ app.get('/',(req,res)=>{
 app.use('/parent',parentRoutes);
 app.use('/admin',adminRoutes);
 app.use('/learner',learnerRoutes);
+app.use('/bus',busRoutes);
+
+require('./config/db')
 
 
 
