@@ -5,9 +5,13 @@ const cors = require('cors');
 const app = express();
 
 // Middleware
-app.use(cors()); // Enable CORS
-app.use(express.json()); // Parse JSON bodies
-
+const corsOptions = {
+    origin: process.env.CLIENT_URL, 
+    credentials: true, 
+  };
+  
+  app.use(express.json());
+  app.use(cors(corsOptions));
 // Routes
 app.get('/', (req, res) => {
     res.send("Welcome to the Online Bus System");
