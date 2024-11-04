@@ -39,7 +39,7 @@ exports.createAdmin = async (req, res) => {
         });
         res.json({ message: 'Admin created successfully', id: result.insertId });
     } catch (err) {
-        res.status(500).json({ message:"Server error. Please try again later."});    }
+        res.status(500).json({ message:err.message});    }
 };
 
 exports.updateAdmin = async (req, res) => {

@@ -38,7 +38,7 @@ exports.createParent = async (req, res) => {
         });
         res.json({ message: 'Parent created successfully', id: result.insertId });
     } catch (err) {
-        res.status(500).json({ message:"Server error. Please try again later."});    }
+        res.status(500).json({ message:err.message});    }
 };
 
 exports.updateParent = async (req, res) => {

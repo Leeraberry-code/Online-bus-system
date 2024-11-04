@@ -1,10 +1,19 @@
 const app = require('./app');
-
+const express = require('express');
+const session = require('express-session');
+ require('dotenv').config();
 const parentRoutes = require('./routes/parentRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const learnerRoutes = require('./routes/learnerRoutes');
 const busRoutes = require('./routes/busRoutes');
+const loginRoutes = require('./routes/loginRoute');
 
+app.use(session({
+    secret: process.env.SECRET_KEY, 
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false } // Set to true if using HTTPS
+  }));
 
 
 require('./config/db')
@@ -19,6 +28,8 @@ app.use('/parent',parentRoutes);
 app.use('/admin',adminRoutes);
 app.use('/learner',learnerRoutes);
 app.use('/bus',busRoutes);
+app.use('/login',loginRoutes);
+
 
 require('./config/db')
 
