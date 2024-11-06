@@ -1,11 +1,13 @@
 const mysql = require('mysql2');
+require('dotenv').config();
+
 
 // Create a connection to the database
 const connection = mysql.createConnection({
     host: 'localhost',        
     user: 'root',             
     password: '',             
-    database: 'online bus registration system' 
+    database: process.env.DATABASE
 });
 
 // Connect to the database
