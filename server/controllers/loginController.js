@@ -6,7 +6,7 @@ const loginController = {
 
     // Ensure both email and password are provided
     if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Email and password are required' });
+      return res.status(400).json({ success: false, message: "Email and password are required." });
     }
 
     // Use the model's loginUser function to authenticate
@@ -31,14 +31,19 @@ const loginController = {
       if (user_type === 'admin') {
         return res.json({
           success: true,
+          userType: user_type, 
+          user_id: user_id,
           message: 'Login successful. Redirecting to admin dashboard...',
-          redirect: '/admin/dashboard',
+          redirect: '/adminDashboard',
+
         });
       } else if (user_type === 'parent') {
         return res.json({
           success: true,
+          userType: user_type, 
+          user_id: user_id,
           message: 'Login successful. Redirecting to parent dashboard...',
-          redirect: '/parent/dashboard',
+          redirect: '/parentDashboard',
         });
       } else {
         return res.json({

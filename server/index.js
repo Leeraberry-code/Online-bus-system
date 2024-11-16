@@ -8,6 +8,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const learnerRoutes = require('./routes/learnerRoutes');
 const busRoutes = require('./routes/busRoutes');
 const loginRoutes = require('./routes/loginRoute');
+const routeRoutes = require('./routes/routeRoutes');
 
 //const routes = require('../server/routes'); // Import routes
 
@@ -44,6 +45,7 @@ app.use('/admin',adminRoutes);
 app.use('/learner',learnerRoutes);
 app.use('/bus',busRoutes);
 app.use('/login',loginRoutes);
+app.use('/route',routeRoutes);
 
 app.listen(port,()=>{
     console.log(`Server is running on ${port}`);
