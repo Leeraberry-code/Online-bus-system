@@ -19,6 +19,8 @@ const stats = {
   acceptedStudents: 120,
   waitlistedStudents: 30,
 };
+import EditLearnerModal from "./components/EditLearnerModal";
+
 
 const COLORS = ["#4CAF50", "#FFC107", "#F44336"];
 
@@ -30,6 +32,8 @@ export default function AdminDashboard() {
   const [routes, setRoutes] = useState<{ [key: number]: Route }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedLearner, setSelectedLearner] = useState<Student | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchBusData = async () => {
     try {
@@ -88,6 +92,17 @@ export default function AdminDashboard() {
     fetchData();
   }, []);
 
+  const handleRowClick = (student: Student) => {
+    setSelectedLearner(student);
+    setIsModalOpen(true);
+  };
+
+  const handleUpdate = (updatedLearner: Student) => {
+    setStudents((prev) =>
+      prev.map((student) => (student.Learner_ID === updatedLearner.Learner_ID ? updatedLearner : student))
+    );
+  };
+
   // Calculate the status counts for the pie chart
   const statusCounts = students.reduce(
     (acc, student) => {
@@ -100,7 +115,7 @@ export default function AdminDashboard() {
   const pieChartData = [
     { name: "Accepted", value: statusCounts.Accepted },
     { name: "Waitlisted", value: statusCounts.Waitlisted },
-    { name: "Rejected", value: statusCounts.Rejected }, // Additional status if applicable
+    { name: "Rejected", value: statusCounts.Rejected },
   ];
 
   if (loading) return <p>Loading...</p>;
@@ -151,7 +166,7 @@ export default function AdminDashboard() {
           <CardHeader>
             <CardTitle>Student Status Distribution</CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px]">
+          <CardContent className="h-[300px] flex flex-col justify-center items-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -170,7 +185,7 @@ export default function AdminDashboard() {
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
-            <div className="flex justify-center mt-4">
+            <div className="flex justify-center mb-16">
               {pieChartData.map((entry, index) => (
                 <div key={`legend-${index}`} className="flex items-center mx-4">
                   <div
@@ -245,7 +260,7 @@ export default function AdminDashboard() {
               {students.map((student) => {
                 const busInfo = busData[student.Bus_ID];
                 return (
-                  <TableRow key={student.Learner_ID}>
+                  <TableRow className="cursor-pointer hover:bg-slate-100" key={student.Learner_ID} onClick={() => handleRowClick(student)}>
                     <TableCell>{student.Learner_Name}</TableCell>
                     <TableCell>{student.Learner_Surname}</TableCell>
                     <TableCell>{student.Learner_CellNo}</TableCell>
@@ -268,8 +283,10 @@ export default function AdminDashboard() {
                         }
                         className={
                           student.Status === "Waitlisted"
-                            ? "bg-yellow-500 hover:bg-yellow-600 p-2"
-                            : "bg-green-500 hover:bg-green-600 p-2"
+                            ? "bg-yellow-500 hover:bg-yellow-600 p-2 text-center"
+                            : student.Status === "Rejected"
+                              ? "bg-red-500 hover:bg-red-600 p-2 text-center"
+                              : "bg-green-500 hover:bg-green-600 p-2 text-center"
                         }
                       >
                         {student.Status}
@@ -282,6 +299,15 @@ export default function AdminDashboard() {
           </Table>
         </CardContent>
       </Card>
+
+      {selectedLearner && (
+        <EditLearnerModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          learner={selectedLearner}
+          onUpdate={handleUpdate}
+        />
+      )}
     </div>
   );
 }
