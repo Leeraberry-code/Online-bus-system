@@ -42,6 +42,29 @@ const Learner = {
         });
     },
 
+    // get all learners connected to a specific parent
+    getLearnersByParentId: (parentId, callback) => {
+        const sql = `
+            SELECT 
+                l.Learner_ID, 
+                l.Learner_Name, 
+                l.Learner_Surname, 
+                l.Learner_Grade, 
+                l.Learner_CellNo
+            FROM 
+                Learner l
+            INNER JOIN 
+                Parent_Student_App_Reg psar ON l.Learner_ID = psar.Learner_ID
+            WHERE 
+                psar.Parent_ID = ?
+        `;
+        
+        connection.query(sql, [parentId], (err, results) => {
+            if (err) return callback(err);
+            callback(null, results);
+        });
+    },
+
     deleteAdmin: (id, callback) => {
         const sql = 'DELETE FROM learner WHERE Learner_ID = ?';
         connection.query(sql, [id], (err, result) => {
