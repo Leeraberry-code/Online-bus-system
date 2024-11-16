@@ -1,13 +1,16 @@
 'use client'
 
-import Image from "next/image";
 import React from "react";
-
 import NavBar from "../components/NavBar";
+import { ToastProvider, ToastViewport } from "../ui/use-toast"; 
+
 export default function Page() {
-  return(
-    <React.Fragment>
-        <NavBar/>
-    </React.Fragment>
+  return (
+    <ToastProvider>
+      <React.Fragment>
+        <NavBar />
+        <ToastViewport />
+      </React.Fragment>
+    </ToastProvider>
   );
 }

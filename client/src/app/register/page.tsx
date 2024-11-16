@@ -10,11 +10,38 @@ import { Label } from "../../ui/label"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../../ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select"
 
+type FormData = {
+  username: string;
+  initials: string;
+  surname: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  cellNo: string;
+  parentId: string;
+  learnerId: string;
+}
+
+type Errors = {
+  username?: string;
+  initials?: string;
+  surname?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+  cellNo?: string;
+  parentId?: string;
+  learnerId?: string;
+};
+
 export default function RegisterPage() {
+
   const router = useRouter(); // Initialize the router
   const [userType, setUserType] = useState<"parent" | "admin">("parent");
-  const [formData, setFormData] = useState({
+
+  const [formData, setFormData] = useState<FormData>({
     username: "",
+    initials: "",
     surname: "", 
     email: "",
     password: "",
@@ -23,8 +50,8 @@ export default function RegisterPage() {
     parentId: "", 
     learnerId: "",
   });
-  const [errors, setErrors] = useState({});
-  const [snackbar, setSnackbar] = useState({
+  const [errors, setErrors] = useState<Errors>({});
+    const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
@@ -39,64 +66,116 @@ export default function RegisterPage() {
   };
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: Errors = {};
     if (!formData.username) newErrors.username = "Username is required";
+    if (!formData.initials) newErrors.initials = "Initials are required";
+    if (!formData.surname) newErrors.surname = "Surname is required";
     if (!formData.email) newErrors.email = "Email is required";
     if (!formData.password) newErrors.password = "Password is required";
     if (!formData.confirmPassword) newErrors.confirmPassword = "Confirm password is required";
-    if (formData.password !== formData.confirmPassword)
-      newErrors.confirmPassword = "Passwords do not match";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Passwords do not match";
+    setErrors(newErrors); // Update the errors state with validation messages
+    return Object.keys(newErrors).length === 0; // Return whether form is valid
+  };;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    //console.log("Form submitted!");
     if (validateForm()) {
-      try {
-        // Determine endpoint and request data based on user type
-        const endpoint = userType === "admin" 
-          ? "http://localhost:5000/admin/admins" 
-          : "http://localhost:5000/parent/parents";
-          
-        const requestData = userType === "admin" 
-          ? {
-              Parent_ID: formData.parentId || null, // Include Parent_ID if applicable or null
-              Learner_ID: formData.learnerId || null, // Include Learner_ID if applicable or null
-              Admin_Initials: formData.username, // Map the frontend username to Admin_Initials
-              Admin_Surname: formData.surname, // Assuming surname is an additional field in the form
-              Admin_Passcode: formData.password, // Map password to Admin_Passcode
-              Admin_Email: formData.email
-            } 
-          : {
-              Parent_Name: formData.username, // Map the frontend username to Parent_Name
-              Parent_Surname: formData.surname, // Assuming surname is an additional field in the form
-              Parent_Passcode: formData.password, // Map password to Parent_Passcode
-              Parent_CellNo: formData.cellNo, // Assuming cellNo is an additional field in the form
-              Parent_Email: formData.email
-            };
-  
-        const response = await axios.post(endpoint, requestData);
+      //console.log("Form is valid!");
+        try{
+          if(userType==='admin'){
+
+            const response = await axios.post('http://localhost:5000/admin/admins',{
+                      Parent_ID: formData.parentId || null, 
+                      Learner_ID: formData.learnerId || null, 
+                      Admin_Initials: formData.initials, 
+                      Admin_Surname: formData.surname, 
+                      Admin_Passcode: formData.password,
+                      Admin_Email: formData.email
+                    });
+
+                    console.log(response.data)
   
         setSnackbar({
           open: true,
           message: "Registration successful!",
           severity: "success",
-        });
+        })
+
+        router.push("/adminDashboard");
+      }else{
+            const response = await axios.post('http://localhost:5000/parent/parents',{
+                      Parent_Name: formData.username, 
+                      Parent_Surname: formData.surname, 
+                      Parent_Passcode: formData.password,
+                      Parent_CellNo: formData.cellNo, 
+                      Parent_Email: formData.email
+                    });
+
+                    console.log(response.data)
   
-        // Redirect based on the role after successful registration
-        if (userType === "admin") {
-          router.push("/admin/dashboard");
-        } else {
-          router.push("/parent/dashboard");
-        }
-      } catch (error) {
         setSnackbar({
           open: true,
-          message: error.response?.data?.message || "Registration failed",
-          severity: "error",
-        });
-      }
+          message: "Registration successful!",
+          severity: "success",
+        })
+
+        router.push("/parentDashboard");
+
+          }
+        }catch(err){
+          console.log(errors);
+          alert("Server error")
+        }
+      // try {
+      //   console.log("Sending request...")
+      //   // Determine endpoint and request data based on user type
+      //   const endpoint = userType === "admin" 
+      //     ? "http://localhost:5000/admin/admins" 
+      //     : "http://localhost:5000/parent/parents";
+          
+      //   const requestData = userType === "admin" 
+      //     ? {
+      //         Parent_ID: formData.parentId || null, // Include Parent_ID if applicable or null
+      //         Learner_ID: formData.learnerId || null, // Include Learner_ID if applicable or null
+      //         Admin_Initials: formData.initials, // Map the frontend username to Admin_Initials
+      //         Admin_Surname: formData.surname, // Assuming surname is an additional field in the form
+      //         Admin_Passcode: formData.password, // Map password to Admin_Passcode
+      //         Admin_Email: formData.email
+      //       } 
+      //     : {
+      //         Parent_Name: formData.username, // Map the frontend username to Parent_Name
+      //         Parent_Surname: formData.surname, // Assuming surname is an additional field in the form
+      //         Parent_Passcode: formData.password, // Map password to Parent_Passcode
+      //         Parent_CellNo: formData.cellNo, // Assuming cellNo is an additional field in the form
+      //         Parent_Email: formData.email
+      //       };
+  
+      //   const response = await axios.post(endpoint, requestData);
+      //   console.log(response.data)
+  
+      //   setSnackbar({
+      //     open: true,
+      //     message: "Registration successful!",
+      //     severity: "success",
+      //   });
+  
+      //   // Redirect based on the role after successful registration
+      //   if (userType === "admin") {
+      //     router.push("/admin/dashboard");
+      //   } else {
+      //     router.push("/parent/dashboard");
+      //   }
+      // } catch (error) {
+      //   setSnackbar({
+      //     open: true,
+      //     message: error.response?.data?.message || "Registration failed",
+      //     severity: "error",
+      //   });
+      // }
+    }else{
+      console.log(errors);
     }
   };
 
@@ -139,19 +218,37 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input id="username" name = "username" type="username" onChange={handleChange} placeholder="Enter your Username" required />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="initials">Initials</Label>
+              <Input id="initials" name = "initials" type="intials" onChange={handleChange} placeholder="Enter your intials" required />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="surname">Surname</Label>
+              <Input id="surname" name="surname" type="surname" onChange={handleChange} placeholder="Enter your surname" required />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cellNo">Cell number</Label>
+              <Input id="cellNo" name="cellNo" type="cellNo" onChange={handleChange} placeholder="Enter your cell number" required />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="Enter your email" required />
+              <Input id="email" name="email" type="email" onChange={handleChange} placeholder="Enter your email" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="Create a password" required />
+              <Input id="password" name="password" type="password" onChange={handleChange} placeholder="Create a password" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input id="confirmPassword" type="password" placeholder="Confirm your password" required />
+              <Input id="confirmPassword" name="confirmPassword" type="password" onChange={handleChange} placeholder="Confirm your password" required />
             </div>
-          </form>
-        </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button className="w-full bg-black text-white" type="submit">
             Register
@@ -163,6 +260,8 @@ export default function RegisterPage() {
             </Link>
           </div>
         </CardFooter>
+          </form>
+        </CardContent>
       </Card>
     </div>
   )
