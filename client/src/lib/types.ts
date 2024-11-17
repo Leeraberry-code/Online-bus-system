@@ -13,8 +13,11 @@ export interface Bus {
   Bus_ID: number;
   Route_ID: number;
   Route_Name: string;
-  capacity: number;
-  occupied: number;
+  Admin_ID ? : number,
+  // capacity: number;
+  // occupied: number;
+  Bus_Slot ? : string
+  Bus_Time ? : string
   PickUp_time: string;
   DropOff_time: string;
   Bus_SpaceStatus: string;

@@ -17,11 +17,12 @@ const BusManagement: React.FC = () => {
         Bus_ID: 0,
         Route_ID: 0,
         Route_Name: "",
-        capacity: 0,
-        occupied: 0,
+        Admin_ID: 1,
+        Bus_SpaceStatus: "Available",
+        Bus_Time: "",
+        Bus_Slot: "Morning",
         PickUp_time: "",
         DropOff_time: "",
-        Bus_SpaceStatus: "Available"
     });
     const [routes, setRoutes] = useState<Route[]>([]);
 
@@ -55,12 +56,18 @@ const BusManagement: React.FC = () => {
     }, []);
 
     const handleRowClick = (bus: Bus) => {
+        console.log(bus); // Check the bus object to ensure it's complete
         setSelectedBus(bus);
         setIsModalOpen(true);
     };
 
-    const handleUpdate = (updatedBus: Bus) => {
-        setBuses((prev) => prev.map((bus) => (bus.Bus_ID === updatedBus.Bus_ID ? updatedBus : bus)));
+    const handleUpdate = async (updatedBus: Bus) => {
+        try {
+            await axios.put(`${baseUrl}/bus/buses/${updatedBus.Bus_ID}`, updatedBus);
+            // await fetchBuses(); // Reload buses after update
+        } catch (error) {
+            setError("Failed to update bus.");
+        }
     };
 
     const handleDelete = async (busId: number) => {
@@ -76,16 +83,17 @@ const BusManagement: React.FC = () => {
         e.preventDefault();
         try {
             const response = await axios.post(`${baseUrl}/bus/buses`, newBus);
-            setBuses((prev) => [...prev, response.data]);
+            await fetchBuses(); // Reload buses after creation
             setNewBus({
                 Bus_ID: 0,
                 Route_ID: 0,
                 Route_Name: "",
-                capacity: 0,
-                occupied: 0,
+                Admin_ID: 1,
+                Bus_SpaceStatus: "Available",
+                Bus_Time: "",
+                Bus_Slot: "Morning",
                 PickUp_time: "",
                 DropOff_time: "",
-                Bus_SpaceStatus: "Available"
             });
             setShowAddBusForm(false); // Hide form after successful creation
         } catch (error) {
@@ -111,31 +119,28 @@ const BusManagement: React.FC = () => {
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {["Bus_ID", "Bus_Number", "capacity", "occupied", "PickUp_time", "DropOff_time"].map((field, index) => (
-                                <div key={index}>
-                                    <label className="block text-sm font-medium text-gray-700">{field.replace(/_/g, " ")}</label>
-                                    <input
-                                        type={field === "capacity" || field === "occupied" ? "number" : "text"}
-                                        placeholder={field.replace(/_/g, " ")}
-                                        value={newBus[field as keyof Bus]}
-                                        onChange={(e) => setNewBus({
-                                            ...newBus,
-                                            [field]: field === "capacity" || field === "occupied"
-                                                ? Number(e.target.value)
-                                                : e.target.value
-                                        })}
-                                        required
-                                        className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm p-3"
-                                    />
-                                </div>
-                            ))}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Bus Number</label>
+                                <input
+                                    type="number"
+                                    placeholder="Bus Number"
+                                    value={newBus.Bus_ID}
+                                    onChange={(e) => setNewBus({ ...newBus, Bus_ID: parseInt(e.target.value, 10) })}
+                                    required
+                                    className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm p-3"
+                                />
+                            </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Route</label>
                                 <select
-                                    value={newBus.Route_ID}
+                                    value={newBus.Route_Name}
                                     onChange={(e) => {
                                         const selectedRoute = routes.find(route => route.Route_Name === e.target.value);
-                                        setNewBus({ ...newBus, Route_ID: selectedRoute ? selectedRoute.Route_ID : 0, Route_Name: e.target.value });
+                                        setNewBus({ 
+                                            ...newBus, 
+                                            Route_ID: selectedRoute ? selectedRoute.Route_ID : 0, 
+                                            Route_Name: e.target.value 
+                                        });
                                     }}
                                     className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm p-3"
                                 >
@@ -144,6 +149,28 @@ const BusManagement: React.FC = () => {
                                         <option key={route.Route_ID} value={route.Route_Name}>{route.Route_Name}</option>
                                     ))}
                                 </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Pick Up Time</label>
+                                <input
+                                    type="text"
+                                    placeholder="Pick Up Time"
+                                    value={newBus.PickUp_time}
+                                    onChange={(e) => setNewBus({ ...newBus, PickUp_time: e.target.value })}
+                                    required
+                                    className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm p-3"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Drop Off Time</label>
+                                <input
+                                    type="text"
+                                    placeholder="Drop Off Time"
+                                    value={newBus.DropOff_time}
+                                    onChange={(e) => setNewBus({ ...newBus, DropOff_time: e.target.value })}
+                                    required
+                                    className="mt-2 block w-full border-gray-300 rounded-lg shadow-sm p-3"
+                                />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Status</label>
@@ -163,51 +190,31 @@ const BusManagement: React.FC = () => {
                     </CardContent>
                 </Card>
             )}
-
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {buses.map((bus) => {
-                    const occupancyPercentage = (bus.occupied / bus.capacity) * 100;
-
-                    return (
-                        <div key={bus.Bus_ID} className="bg-white p-6 rounded-lg shadow card-hover">
-                            <div className="flex justify-between items-start mb-4">
-                                <h3 className="text-lg font-semibold text-gray-900">Bus #{bus.Bus_ID}</h3>
-                                <span className="text-sm font-medium text-gray-500">
-                                    {bus.occupied}/{bus.capacity} seats
-                                </span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
-                                <div
-                                    className="bg-primary h-2.5 rounded-full"
-                                    style={{ width: `${occupancyPercentage}%` }}
-                                ></div>
-                            </div>
-                            <div className="space-y-2 text-sm text-gray-500">
-                                <p>Route: {routes[bus.Route_ID] ? routes[bus.Route_ID].Route_Name : "Loading..."}</p>
-                                <p>Pick-up: {bus.PickUp_time}</p>
-                                <p>Drop-off: {bus.DropOff_time}</p>
-                                <p className="font-medium">
-                                    Status:{" "}
-                                    <span
-                                        className={
-                                            bus.Bus_SpaceStatus === "Available"
-                                                ? "text-green-600"
-                                                : "text-red-600"
-                                        }
-                                    >
-                                        {bus.Bus_SpaceStatus}
-                                    </span>
-                                </p>
-                            </div>
-                            <div className="mt-4">
-                                <button onClick={() => handleRowClick(bus)} className="text-blue-500">Edit</button>
-                                <button onClick={() => handleDelete(bus.Bus_ID)} className="text-red-500 ml-2">Delete</button>
-                            </div>
+                {buses.map((bus) => (
+                    <div key={bus.Bus_ID} className="bg-white p-6 rounded-lg shadow card-hover">
+                        <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900">Bus #{bus.Bus_ID}</h3>
+                            <span className="text-sm font-medium text-gray-500">seats</span>
                         </div>
-                    );
-                })}
+                        <div className="space-y-2 text-sm text-gray-500">
+                            <p>Route: {routes[bus.Route_ID] ? routes[bus.Route_ID].Route_Name : "Loading..."}</p>
+                            <p>Pick-up: {bus.PickUp_time}</p>
+                            <p>Drop-off: {bus.DropOff_time}</p>
+                            <p className="font-medium">
+                                Status:{" "}
+                                <span className={bus.Bus_SpaceStatus === "Available" ? "text-green-600" : "text-red-600"}>
+                                    {bus.Bus_SpaceStatus}
+                                </span>
+                            </p>
+                        </div>
+                        <div className="mt-4">
+                            <button onClick={() => handleRowClick(bus)} className="text-blue-500">Edit</button>
+                            <button onClick={() => handleDelete(bus.Bus_ID)} className="text-red-500 ml-2">Delete</button>
+                        </div>
+                    </div>
+                ))}
             </div>
-
             {selectedBus && (
                 <EditBusModal
                     isOpen={isModalOpen}
