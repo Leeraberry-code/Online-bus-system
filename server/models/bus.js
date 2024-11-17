@@ -18,7 +18,7 @@ const Bus = {
     },
 
     createBus: (data, callback) => {
-        const { Admin_ID, Route_ID, Bus_SpaceStatus, Bus_Time, Bus_Slot, Date } = data;
+        const { Admin_ID, Route_ID, Bus_SpaceStatus, Bus_Time, Bus_Slot, PickUp_time, DropOff_time, Date } = data;
 
         if (!['Available', 'Not Available'].includes(Bus_SpaceStatus)) {
             return callback(new Error('Invalid Bus_SpaceStatus value'));
@@ -28,15 +28,15 @@ const Bus = {
             return callback(new Error('Invalid Bus_Slot value'));
         }
 
-        const sql = 'INSERT INTO buses (Admin_ID, Route_ID, Bus_SpaceStatus, Bus_Time, Bus_Slot, Date) VALUES (?, ?, ?, ?, ?, ?)';
-        connection.query(sql, [Admin_ID, Route_ID, Bus_SpaceStatus, Bus_Time, Bus_Slot, Date], (err, result) => {
+        const sql = 'INSERT INTO buses (Admin_ID, Route_ID, Bus_SpaceStatus, Bus_Time, Bus_Slot, PickUp_time, DropOff_time, Date) VALUES (?, ?, ?, ?, ?, ?)';
+        connection.query(sql, [Admin_ID, Route_ID, Bus_SpaceStatus, Bus_Time, Bus_Slot, PickUp_time, DropOff_time,  Date], (err, result) => {
             if (err) return callback(err);
             callback(null, result);
         });
     },
 
     updateBus: (id, data, callback) => {
-        const { Admin_ID, Route_ID, Bus_SpaceStatus, Bus_Time, Bus_Slot, Date } = data;
+        const { Admin_ID, Route_ID, Bus_SpaceStatus, Bus_Time, Bus_Slot,  PickUp_time, DropOff_time, Date } = data;
 
         if (!['Available', 'Not Available'].includes(Bus_SpaceStatus)) {
             return callback(new Error('Invalid Bus_SpaceStatus value'));
@@ -46,8 +46,8 @@ const Bus = {
             return callback(new Error('Invalid Bus_Slot value'));
         }
 
-        const sql = 'UPDATE buses SET Admin_ID = ?, Route_ID = ?, Bus_SpaceStatus = ?, Bus_Time = ?, Bus_Slot = ?, Date = ? WHERE Bus_ID = ?';
-        connection.query(sql, [Admin_ID, Route_ID, Bus_SpaceStatus, Bus_Time, Bus_Slot, Date, id], (err, result) => {
+        const sql = 'UPDATE buses SET Admin_ID = ?, Route_ID = ?, Bus_SpaceStatus = ?, Bus_Time = ?, Bus_Slot = ?,  PickUp_time = ?, DropOff_time = ?, Date = ? WHERE Bus_ID = ?';
+        connection.query(sql, [Admin_ID, Route_ID, Bus_SpaceStatus, Bus_Time, Bus_Slot, PickUp_time, DropOff_time, Date, id], (err, result) => {
             if (err) return callback(err);
             callback(null, result);
         });

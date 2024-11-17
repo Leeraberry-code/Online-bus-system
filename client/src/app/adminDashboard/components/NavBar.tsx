@@ -25,7 +25,7 @@ type User = {
 };
 
 
- function Navbar() {
+ export default function Navbar() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [pageAnchorEl, setPageAnchorEl] = useState<null | HTMLElement>(null);
   const [errors, setErrors] = useState<string | null>(null);
