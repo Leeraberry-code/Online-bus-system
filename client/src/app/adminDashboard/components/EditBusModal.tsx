@@ -24,16 +24,33 @@ const EditBusModal: React.FC<EditBusModalProps> = ({ isOpen, onClose, bus, onUpd
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        try {
-            const response = await axios.put(`http://localhost:5000/bus/buses/${busId}`, {
-                Bus_ID: busId,
-                Route_ID: routeId,
-                Bus_SpaceStatus: status,
-            });
-            onUpdate(response.data);
-            onClose();
-        } catch (error) {
-            console.error("Error updating bus:", error);
+
+        if (!busId) {
+            console.error("Bus ID is missing or undefined.");
+            return;  // Early return if busId is missing
+        }
+
+        // Prepare the update object
+        const updateData: any = {};
+        if (routeId !== bus.Route_ID) {
+            updateData.Route_ID = routeId;
+        }
+        if (status !== bus.Bus_SpaceStatus) {
+            updateData.Bus_SpaceStatus = status;
+        }
+
+        // Only send the update request if there are changes
+        if (Object.keys(updateData).length > 0) {
+            try {
+                const response = await axios.put(`http://localhost:5000/bus/buses/${busId}`, updateData);
+                onUpdate(response.data); // Call the onUpdate function with the updated bus data
+                onClose(); // Close the modal after updating
+            } catch (error) {
+                console.error("Error updating bus:", error);
+            }
+        } else {
+            console.log("No changes detected, not sending update.");
+            onClose(); // Close the modal if no changes
         }
     };
 
@@ -84,4 +101,4 @@ const EditBusModal: React.FC<EditBusModalProps> = ({ isOpen, onClose, bus, onUpd
     );
 };
 
-export default EditBusModal; 
+export default EditBusModal;
