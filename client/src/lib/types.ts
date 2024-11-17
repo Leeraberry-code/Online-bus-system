@@ -6,11 +6,11 @@ export interface Student {
   Learner_Grade: number;
   Bus_ID: number;
   Status: string;
+  Admin_ID: number
 }
 
 export interface Bus {
   Bus_ID: number;
-  Bus_Number: string;
   Route_ID: number;
   Route_Name: string;
   capacity: number;
