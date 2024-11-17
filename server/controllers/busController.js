@@ -31,7 +31,10 @@ exports.updateBus = (req, res) => {
     const { id } = req.params;
     const busData = req.body;
     Bus.updateBus(id, busData, (err, result) => {
-        if (err) return res.status(500).json({ error: err });
+        if (err) {
+            console.error("Error updating bus:", err); // Log the error for debugging
+            return res.status(500).json({ error: err.message || "An error occurred while updating the bus." });
+        }
         res.json({ message: 'Bus updated successfully' });
     });
 };
