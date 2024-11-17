@@ -29,7 +29,7 @@ app.use(session({
     resave: false,
     saveUninitialized: true,
     cookie: { secure: false } // Set to true if using HTTPS
-  }));
+}));
 
 
 require('./config/db')
