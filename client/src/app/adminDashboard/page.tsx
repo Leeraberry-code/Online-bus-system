@@ -10,7 +10,14 @@ import {
 } from "../../ui/table";
 import { Badge } from "../../ui/badge";
 import { Progress } from "../../ui/progress";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { Pie } from "react-chartjs-2"; // Import Pie chart from react-chartjs-2
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+} from "chart.js"; // Import required modules from Chart.js
+
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Bus, Student, Route } from "../../lib/types";
@@ -24,6 +31,8 @@ import EditLearnerModal from "./components/EditLearnerModal";
 
 const COLORS = ["#4CAF50", "#FFC107", "#F44336"];
 
+// Register required Chart.js components
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function AdminDashboard() {
   const baseUrl = "http://localhost:5000";
@@ -112,96 +121,71 @@ export default function AdminDashboard() {
     { Accepted: 0, Waitlisted: 0, Rejected: 0 } // Adjust statuses as needed
   );
 
-  const pieChartData = [
-    { name: "Accepted", value: statusCounts.Accepted },
-    { name: "Waitlisted", value: statusCounts.Waitlisted },
-    { name: "Rejected", value: statusCounts.Rejected },
-  ];
+  const pieChartData = {
+    labels: ["Accepted", "Waitlisted", "Rejected"],
+    datasets: [
+      {
+        data: [
+          statusCounts.Accepted,
+          statusCounts.Waitlisted,
+          statusCounts.Rejected,
+        ],
+        backgroundColor: COLORS,
+        hoverBackgroundColor: COLORS,
+      },
+    ],
+  };
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
-        <p className="text-gray-600">
-          Strive High Secondary School Transportation Management
-        </p>
+    <div className="min-h-screen bg-gray-100 p-2 md:p-6 mt-4">
+      <header className="mb-3">
+        <h1 className="text-xl md:text-2xl font-semibold text-gray-800">Admin Dashboard</h1>
+        <p className="text-gray-600">Strive High Secondary School Transportation Management</p>
       </header>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
+      <div className="grid gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-3 mb-5">
         <Card>
           <CardHeader>
-            <CardTitle>Total Students</CardTitle>
+            <CardTitle className="text-lg">Total Students</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-bold">{students.length}</p>
+            <p className="text-2xl font-bold">{students.length}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Accepted Students</CardTitle>
+            <CardTitle className="text-lg">Accepted Students</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-bold text-green-600">
-            {statusCounts.Accepted}
-            </p>
+            <p className="text-2xl font-bold text-green-600">{statusCounts.Accepted}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Waitlisted Students</CardTitle>
+            <CardTitle className="text-lg">Waitlisted Students</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-bold text-yellow-600">
-            {statusCounts.Waitlisted}
-            </p>
+            <p className="text-2xl font-bold text-yellow-600">{statusCounts.Waitlisted}</p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 mb-6">
+      <div className="grid gap-3 md:gap-4 md:grid-cols-2 mb-5">
         <Card>
           <CardHeader>
-            <CardTitle>Student Status Distribution</CardTitle>
+            <CardTitle className="text-lg">Student Status Distribution</CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px] flex flex-col justify-center items-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={pieChartData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  dataKey="value"
-                >
-                  {pieChartData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="flex justify-center mb-16">
-              {pieChartData.map((entry, index) => (
-                <div key={`legend-${index}`} className="flex items-center mx-4">
-                  <div
-                    className="w-4 h-4 mr-2"
-                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                  ></div>
-                  <span>{entry.name}</span>
-                </div>
-              ))}
-            </div>
+          <CardContent className="h-[250px] flex flex-col justify-center items-center">
+            <Pie data={pieChartData} options={{ responsive: true, maintainAspectRatio: false }} />
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Bus Status</CardTitle>
+            <CardTitle className="text-lg">Bus Status</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -209,7 +193,6 @@ export default function AdminDashboard() {
                 <TableRow>
                   <TableHead>Bus Number</TableHead>
                   <TableHead>Route</TableHead>
-                  {/* <TableHead>Capacity</TableHead> */}
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
@@ -217,19 +200,8 @@ export default function AdminDashboard() {
                 {Object.values(busData).map((bus) => (
                   <TableRow key={bus.Bus_ID}>
                     <TableCell>{bus.Bus_ID}</TableCell>
-                    <TableCell>{routes[bus.Route_ID]
-                        ? routes[bus.Route_ID].Route_Name
-                        : "Loading..."}</TableCell>
-                    {/* <TableCell>
-                      {bus.occupied}/{bus.capacity}
-                    </TableCell> */}
-                    <TableCell>
-                      {/* <Progress
-                        value={(bus.occupied / bus.capacity) * 100}
-                        className="w-[60px]"
-                      /> */}
-                      {bus.Bus_SpaceStatus}
-                    </TableCell>
+                    <TableCell>{routes[bus.Route_ID] ? routes[bus.Route_ID].Route_Name : "Loading..."}</TableCell>
+                    <TableCell>{bus.Bus_SpaceStatus}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -240,7 +212,7 @@ export default function AdminDashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Student Details</CardTitle>
+          <CardTitle className="text-lg">Student Details</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -260,33 +232,29 @@ export default function AdminDashboard() {
               {students.map((student) => {
                 const busInfo = busData[student.Bus_ID];
                 return (
-                  <TableRow className="cursor-pointer hover:bg-slate-100" key={student.Learner_ID} onClick={() => handleRowClick(student)}>
+                  <TableRow
+                    className="cursor-pointer hover:bg-slate-100"
+                    key={student.Learner_ID}
+                    onClick={() => handleRowClick(student)}
+                  >
                     <TableCell>{student.Learner_Name}</TableCell>
                     <TableCell>{student.Learner_Surname}</TableCell>
                     <TableCell>{student.Learner_CellNo}</TableCell>
                     <TableCell>{student.Learner_Grade}</TableCell>
-                    <TableCell>
-                      {busInfo ? busInfo.Bus_ID : "Loading..."}
-                    </TableCell>
-                    <TableCell>
-                      {busInfo ? busInfo.PickUp_time : "Loading..."}
-                    </TableCell>
-                    <TableCell>
-                      {busInfo ? busInfo.DropOff_time : "Loading..."}
-                    </TableCell>
+                    <TableCell>{busInfo ? busInfo.Bus_ID : "Loading..."}</TableCell>
+                    <TableCell>{busInfo ? busInfo.PickUp_time : "Loading..."}</TableCell>
+                    <TableCell>{busInfo ? busInfo.DropOff_time : "Loading..."}</TableCell>
                     <TableCell>
                       <Badge
                         variant={
-                          student.Status === "Accepted"
-                            ? "success"
-                            : "destructive"
+                          student.Status === "Accepted" ? "success" : "destructive"
                         }
                         className={
                           student.Status === "Waitlisted"
-                            ? "bg-yellow-500 hover:bg-yellow-600 p-2 text-center"
+                            ? "bg-yellow-500 hover:bg-yellow-600 p-1 text-center"
                             : student.Status === "Rejected"
-                              ? "bg-red-500 hover:bg-red-600 p-2 text-center"
-                              : "bg-green-500 hover:bg-green-600 p-2 text-center"
+                            ? "bg-red-500 hover:bg-red-600 p-1 text-center text-white"
+                            : "bg-green-500 hover:bg-green-600 p-1 text-center"
                         }
                       >
                         {student.Status}
