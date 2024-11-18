@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 13, 2024 at 02:05 PM
+-- Generation Time: Nov 16, 2024 at 04:52 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -100,7 +100,7 @@ INSERT INTO `drop_off` (`DropOff_No`, `DropOff_Name`, `DropOff_Time`) VALUES
 
 CREATE TABLE `learner` (
   `Learner_ID` int(11) NOT NULL,
-  `Bus_ID` int(10) NOT NULL,
+  `Bus_ID` int(11) NOT NULL,
   `Admin_ID` int(10) DEFAULT NULL,
   `Learner_Name` varchar(100) DEFAULT NULL,
   `Learner_Surname` varchar(100) DEFAULT NULL,
@@ -114,8 +114,8 @@ CREATE TABLE `learner` (
 --
 
 INSERT INTO `learner` (`Learner_ID`, `Bus_ID`, `Admin_ID`, `Learner_Name`, `Learner_Surname`, `Learner_CellNo`, `Learner_Grade`, `Status`) VALUES
-(1, 3, 3, 'Carel', 'Smit', 833780177, 10, 'Accepted'),
-(2, 2, 3, 'Patricia', 'Forbes', 812543717, 8, 'Waitlisted');
+(1, 1, NULL, 'Carel', 'Smit', NULL, 7, 'Waitlisted'),
+(2, 2, NULL, 'Patricia', 'Forbes', 631120386, 8, 'Accepted');
 
 -- --------------------------------------------------------
 
@@ -137,9 +137,30 @@ CREATE TABLE `parent` (
 --
 
 INSERT INTO `parent` (`Parent_ID`, `Parent_Name`, `Parent_Surname`, `Parent_Passcode`, `Parent_CellNo`, `Parent_Email`) VALUES
-(1, 'Johan', 'Smit', 'JohanSmit123@', 833780166, 'Johan.Smit@gmail.com'),
+(1, 'Johan', 'Smit', 'JohanSmit123@', 833780166, 'tumelothinane13@gmail.com'),
 (2, 'Katleho', 'Mafalela', 'katmafalela94@', 791941571, 'katlehomafalela@gmail.com'),
 (4, 'Thuso', 'Masenya', 'MASENYAwanga2023/', 731233453, 'thusomasenya@gmail.com');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `parent_student_app_reg`
+--
+
+CREATE TABLE `parent_student_app_reg` (
+  `Application_No` int(11) NOT NULL,
+  `Learner_ID` int(11) DEFAULT NULL,
+  `Parent_ID` int(11) DEFAULT NULL,
+  `Application_Status` varchar(20) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `parent_student_app_reg`
+--
+
+INSERT INTO `parent_student_app_reg` (`Application_No`, `Learner_ID`, `Parent_ID`, `Application_Status`) VALUES
+(1, 1, 1, 'Waitlisted'),
+(2, 2, 2, 'Waitlisted');
 
 -- --------------------------------------------------------
 
@@ -159,7 +180,7 @@ CREATE TABLE `pick_up` (
 
 INSERT INTO `pick_up` (`PickUp_No`, `PickUp_Name`, `PickUp_Time`) VALUES
 ('1A', 'Corner of Panorama and Marabou Road', '06:22:00.000000'),
-('1B', 'Corner of Kolgansstraat and Skimmerstraat', '06:30:00.000000');
+('2B', 'Corner of Kolgansstraat and Skimmerstraat', '06:30:00.000000');
 
 -- --------------------------------------------------------
 
@@ -179,9 +200,9 @@ CREATE TABLE `routes` (
 --
 
 INSERT INTO `routes` (`Route_ID`, `PickUp_No`, `DropOff_No`, `Route_Name`) VALUES
-(1, '1A', '1B', 'Rooihuiskraal'),
-(2, '2A', '2B', 'Wierdapark'),
-(3, '3A', '3B', 'Centurion');
+(1, '1A', '2A', 'Rooihuiskraal'),
+(2, '2B', '2B', 'Wierdapark'),
+(3, '2B', '2B', 'Centurion');
 
 -- --------------------------------------------------------
 
@@ -245,6 +266,14 @@ ALTER TABLE `learner`
 --
 ALTER TABLE `parent`
   ADD PRIMARY KEY (`Parent_ID`);
+
+--
+-- Indexes for table `parent_student_app_reg`
+--
+ALTER TABLE `parent_student_app_reg`
+  ADD PRIMARY KEY (`Application_No`),
+  ADD KEY `Learner_ID` (`Learner_ID`),
+  ADD KEY `Parent_ID` (`Parent_ID`);
 
 --
 -- Indexes for table `pick_up`
@@ -322,6 +351,38 @@ ALTER TABLE `admin`
   ADD CONSTRAINT `admin_ibfk_2` FOREIGN KEY (`Learner_ID`) REFERENCES `learner` (`Learner_ID`),
   ADD CONSTRAINT `admin_ibfk_3` FOREIGN KEY (`Parent_ID`) REFERENCES `parent` (`Parent_ID`),
   ADD CONSTRAINT `admin_ibfk_4` FOREIGN KEY (`Learner_ID`) REFERENCES `learner` (`Learner_ID`);
+
+--
+-- Constraints for table `buses`
+--
+ALTER TABLE `buses`
+  ADD CONSTRAINT `buses_ibfk_1` FOREIGN KEY (`Route_ID`) REFERENCES `routes` (`Route_ID`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `learner`
+--
+ALTER TABLE `learner`
+  ADD CONSTRAINT `learner_ibfk_1` FOREIGN KEY (`Bus_ID`) REFERENCES `buses` (`Bus_ID`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `parent_student_app_reg`
+--
+ALTER TABLE `parent_student_app_reg`
+  ADD CONSTRAINT `parent_student_app_reg_ibfk_1` FOREIGN KEY (`Learner_ID`) REFERENCES `learner` (`Learner_ID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `parent_student_app_reg_ibfk_2` FOREIGN KEY (`Parent_ID`) REFERENCES `parent` (`Parent_ID`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `routes`
+--
+ALTER TABLE `routes`
+  ADD CONSTRAINT `routes_ibfk_1` FOREIGN KEY (`PickUp_No`) REFERENCES `pick_up` (`PickUp_No`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `routes_ibfk_2` FOREIGN KEY (`DropOff_No`) REFERENCES `drop_off` (`DropOff_No`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `waiting_list`
+--
+ALTER TABLE `waiting_list`
+  ADD CONSTRAINT `waiting_list_ibfk_1` FOREIGN KEY (`Learner_ID`) REFERENCES `learner` (`Learner_ID`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

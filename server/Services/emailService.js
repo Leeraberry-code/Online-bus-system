@@ -7,13 +7,13 @@ const transporter = nodemailer.createTransport({
   service: "gmail",
   // port: 2525,
   auth: {
-    user: "tumelothinane13@gmail.com",
+    user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD,
   },
 });
 
 const sender = {
-  email: "tumelothinane13@gmail.com",
+  email: process.env.EMAIL_USER,
   name: "Bus System",
 };
 
