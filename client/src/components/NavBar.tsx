@@ -1,10 +1,8 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Logo from '../ui/logo';
-import WidthContainer from '../ui/widthContainer';
-import { useRouter } from 'next/navigation';
+"use client"
+import Link from "next/link";
+import Logo from "../ui/logo";
+import WidthContainer from "../ui/widthContainer";
+import { useEffect, useState } from "react";
 
 export default function NavBar() {
   return (
@@ -21,44 +19,41 @@ export default function NavBar() {
 
 function AuthNav() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const router = useRouter();
 
-  // Check login state (this can be replaced with your actual auth logic)
   useEffect(() => {
-    // Simulating user login check with localStorage (replace with your auth solution)
-    const token = localStorage.getItem('authToken');
-    setIsLoggedIn(!!token);
+    // Check if user data is in localStorage
+    const user = localStorage.getItem("user_id"); // or use 'token' if you're using tokens
+    setIsLoggedIn(!!user); // Set state to true if user exists
   }, []);
 
   const handleLogout = () => {
-    // Clear authentication token (replace with your actual logout logic)
-    localStorage.removeItem('authToken');
-    setIsLoggedIn(false);
-    router.push('/login');
+    // Clear user data from localStorage
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("user_type"); // Clear other relevant user data
+    setIsLoggedIn(false); // Update state
+    // Optionally redirect to the login page
+    window.location.href = "/login";
   };
-
-  if (isLoggedIn) {
-    return (
-      <button
-        onClick={handleLogout}
-        className="btn btn-outline px-4 py-2 border rounded-md"
-      >
-        Log Out
-      </button>
-    );
-  }
 
   return (
     <div className="space-x-2">
-      <Link href="/login" className="btn btn-outline px-4 py-2 border rounded-md">
-        Log In
-      </Link>
-      <Link
-        href="/register"
-        className="btn btn-primary px-4 py-2 bg-black text-white rounded-md"
-      >
-        Register
-      </Link>
+      {isLoggedIn ? (
+        <button
+          onClick={handleLogout}
+          className="btn btn-primary px-4 py-2 bg-black text-white rounded-md"
+        >
+          Logout
+        </button>
+      ) : (
+        <>
+          <Link href="/login" className="btn btn-outline px-4 py-2 border rounded-md">
+            Log In
+          </Link>
+          <Link href="/register" className="btn btn-primary px-4 py-2 bg-black text-white rounded-md">
+            Register
+          </Link>
+        </>
+      )}
     </div>
   );
 }

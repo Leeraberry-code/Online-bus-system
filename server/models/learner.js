@@ -10,28 +10,46 @@ const Learner = {
         });
     },
 
-    getLearnerById: (id, callback) => {
-        const sql = 'SELECT * FROM learner WHERE Learner_ID = ?';
-        connection.query(sql, [id], (err, result) => {
+    getLearnerByIdAndParentId: (learnerId, parentId, callback) => {
+        const sql = `
+        SELECT l.* 
+        FROM learner l
+        JOIN Parent_Student_App_Reg psar ON l.Learner_ID = psar.Learner_ID
+        WHERE l.Learner_ID = ? AND psar.Parent_ID = ?;
+        `;
+        connection.query(sql, [learnerId, parentId], (err, result) => {
             if (err) return callback(err);
-            callback(null, result);
+            callback(null, result.length ? result[0] : null); // Return null if not found
         });
     },
+    
 
     createLearner: (data, callback) => {
-        const { 
-            Bus_ID,
-            Admin_ID,
+        const {
+            Bus_ID = null,        
+            Admin_ID = null,   
             Learner_Name,
             Learner_Surname,
             Learner_CellNo,
-            Learner_Grade } = data;
-        const sql = 'INSERT INTO learner (Learner_ID, Bus_ID, Admin_ID, Learner_Name, Learner_Surname, Learner_CellNo, Learner_Grade) VALUES (?, ?, ?, ?, ?, ?)';
-        connection.query(sql, [Learner_ID, Bus_ID, Admin_ID, Learner_Name, Learner_Surname, Learner_CellNo, Learner_Grade], (err, result) => {
-            if (err) return callback(err);
-            callback(null, result);
-        });
+            Learner_Grade
+        } = data;
+    
+        const defaultStatus = "Waitlisted";
+        const sql = `
+            INSERT INTO learner (Bus_ID, Admin_ID, Learner_Name, Learner_Surname, Learner_CellNo, Learner_Grade, Status)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `;
+    
+        connection.query(
+            sql,
+            [Bus_ID, Admin_ID, Learner_Name, Learner_Surname, Learner_CellNo, Learner_Grade, defaultStatus],
+            (err, result) => {
+                if (err) return callback(err);
+                callback(null, result);
+            }
+        );
     },
+    
 
     updateLearner: (id, data, callback) => {
         const { Bus_ID, Admin_ID, Learner_CellNo, Learner_Grade, Status } = data;
