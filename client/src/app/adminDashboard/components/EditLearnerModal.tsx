@@ -40,7 +40,7 @@ const EditLearnerModal: React.FC<EditLearnerModalProps> = ({ isOpen, onClose, le
             onUpdate(response.data);
             onClose();
         } catch (error) {
-            console.error("Error updating learner:", error);
+            console.log("Error updating learner:", error);
         }
     };
 

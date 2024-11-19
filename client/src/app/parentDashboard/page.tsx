@@ -14,6 +14,7 @@ export default function ParentDashboard() {
     Learner_Surname: "",
     Learner_CellNo: "",
     Learner_Grade: "",
+    Learner_Status: "Waitlisted",
   });
 
   // Fetch learners from the server
@@ -66,7 +67,6 @@ export default function ParentDashboard() {
 
     const newLearnerOptimistic = {
       ...newLearner,
-      Learner_ID: null, // No temporary ID
       Parent_ID: parseInt(user_id, 10),
       Status: "Waitlisted",
       pending: true, // Visual indicator for a pending state
@@ -80,6 +80,7 @@ export default function ParentDashboard() {
       Learner_Surname: "",
       Learner_CellNo: "",
       Learner_Grade: "",
+      Learner_Status: "Waitlisted",
     });
 
     try {
@@ -90,7 +91,13 @@ export default function ParentDashboard() {
       });
 
       if (response.status === 201) {
-        // Refresh the entire list after receiving backend data
+        setStudents((prev) =>
+          prev.map((s) =>
+            s.pending && s.Learner_Name === newLearner.Learner_Name // Find the pending learner
+              ? { ...s, Learner_ID: response.data.id, pending: false }  // Add Learner_ID and remove pending
+              : s
+          )
+        );
         fetchStudents(true);
       }
     } catch (err: any) {

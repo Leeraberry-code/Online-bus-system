@@ -107,7 +107,8 @@ exports.createLearner = async (req, res) => {
 
 exports.updateLearner = async (req, res) => {
     try {
-        const { id } = req.params;
+        const  id  = req.params.id;
+        console.log("Learner ID:", id)
         const learnerData = req.body;
         const result = await new Promise((resolve, reject) => {
             Learner.updateLearner(id, learnerData, (err, result) => {
