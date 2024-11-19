@@ -1,4 +1,6 @@
 const connection = require('../config/db');
+const { sendStatusChangeEmail } = require('../services/email');
+
 
 // Define the Admin model with database queries
 const Learner = {
@@ -31,18 +33,19 @@ const Learner = {
             Learner_Name,
             Learner_Surname,
             Learner_CellNo,
-            Learner_Grade
+            Learner_Grade,
+            Parent_ID,
         } = data;
     
         const defaultStatus = "Waitlisted";
         const sql = `
-            INSERT INTO learner (Bus_ID, Admin_ID, Learner_Name, Learner_Surname, Learner_CellNo, Learner_Grade, Status)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO learner (Bus_ID, Admin_ID, Learner_Name, Learner_Surname, Learner_CellNo, Learner_Grade, Status, Parent_ID)
+            VALUES (?, ?, ?, ?, ?, ?, ?,?)
         `;
     
         connection.query(
             sql,
-            [Bus_ID, Admin_ID, Learner_Name, Learner_Surname, Learner_CellNo, Learner_Grade, defaultStatus],
+            [Bus_ID, Admin_ID, Learner_Name, Learner_Surname, Learner_CellNo, Learner_Grade, defaultStatus,Parent_ID],
             (err, result) => {
                 if (err) return callback(err);
                 callback(null, result);
@@ -53,11 +56,11 @@ const Learner = {
 
     updateLearner: (id, data, callback) => {
         const { Bus_ID, Admin_ID, Learner_CellNo, Learner_Grade, Status } = data;
-
+    
         // Prepare the update fields and values
         const updateFields = [];
         const updateValues = [];
-
+    
         if (Bus_ID !== undefined) {
             updateFields.push('Bus_ID = ?');
             updateValues.push(Bus_ID);
@@ -78,59 +81,66 @@ const Learner = {
             updateFields.push('Status = ?');
             updateValues.push(Status);
         }
-
+    
         // If no fields to update, return an error
         if (updateFields.length === 0) {
             return callback(new Error('No fields to update.'));
         }
-
-        // Add the Learner_ID to the end of the update values
-        updateValues.push(id);
-
-        // Construct the SQL query
-        const sql = `UPDATE learner SET ${updateFields.join(', ')} WHERE Learner_ID = ?`;
-        connection.query(sql, updateValues, (err, result) => {
+    
+        // Fetch the current status before updating
+        const currentStatusSql = 'SELECT Status, Parent_ID, Learner_Name FROM learner WHERE Learner_ID = ?';
+        connection.query(currentStatusSql, [id], (err, statusResult) => {
             if (err) return callback(err);
-
-            // Check if the status has changed
-            if (result.affectedRows > 0 && Status !== undefined) {
-                const currentStatusSql = 'SELECT Status FROM learner WHERE Learner_ID = ?';
-                connection.query(currentStatusSql, [id], (err, statusResult) => {
+            const currentStatus = statusResult[0]?.Status;
+            const parentId = statusResult[0]?.Parent_ID;
+            const learnerName = statusResult[0]?.Learner_Name;
+    
+            // Proceed with the update if status has changed
+            if (currentStatus !== Status) {
+                // Add Learner_ID to the update values
+                updateValues.push(id);
+                const sql = `UPDATE learner SET ${updateFields.join(', ')} WHERE Learner_ID = ?`;
+                connection.query(sql, updateValues, (err, result) => {
                     if (err) return callback(err);
-                    const currentStatus = statusResult[0]?.Status;
-
-                    if (currentStatus !== Status) {
-                        const parentSql = 'SELECT Parent_Email, Parent_Name FROM parent WHERE Parent_ID = ?';
-                        connection.query(parentSql, [Admin_ID], (err, parentResult) => {
-                            if (err) return callback(err);
-                            const parentEmail = parentResult[0]?.Parent_Email;
-                            const parentName = parentResult[0]?.Parent_Name;
-
-                            if (parentEmail) {
-                                const reason = "Status updated by the admin";
-                                const additionalInfo = "Please check the dashboard for more details.";
-                                sendStatusChangeEmail(parentEmail, parentName, data.Learner_Name, Status, reason, additionalInfo)
-                                    .then(successMessage => {
-                                        console.log(successMessage);
-                                        callback(null, result);
-                                    })
-                                    .catch(errorMessage => {
-                                        console.error(errorMessage);
-                                        callback(null, result); // Proceed even if email fails
-                                    });
-                            } else {
-                                callback(null, result);
-                            }
-                        });
-                    } else {
-                        callback(null, result);
-                    }
+    
+                    // Send email notification to parent
+                    const parentSql = 'SELECT Parent_Email, Parent_Name FROM parent WHERE Parent_ID = ?';
+                    console.log(parentSql, parentId)
+                    connection.query(parentSql, [parentId], (err, parentResult) => {
+                        if (err) return callback(err);
+                        const parentEmail = parentResult[0]?.Parent_Email;
+                        const parentName = parentResult[0]?.Parent_Name;
+    
+                        if (parentEmail) {
+                            const reason = "Status updated by the admin";
+                            const additionalInfo = "Please check the dashboard for more details.";
+                            sendStatusChangeEmail(
+                                parentEmail,
+                                parentName,
+                                learnerName,
+                                Status,
+                                reason,
+                                additionalInfo
+                            )
+                                .then((successMessage) => {
+                                    console.log(successMessage);
+                                    callback(null, result);
+                                })
+                                .catch((errorMessage) => {
+                                    console.error(errorMessage);
+                                    callback(null, result); // Proceed even if email fails
+                                });
+                        } else {
+                            callback(null, result); // Proceed without sending an email
+                        }
+                    });
                 });
             } else {
-                callback(null, result);
+                callback(null, { message: "No status change detected." });
             }
         });
     },
+    
 
     // get all learners connected to a specific parent
     getLearnersByParentId: (parentId, callback) => {
@@ -140,7 +150,8 @@ const Learner = {
                 l.Learner_Name, 
                 l.Learner_Surname, 
                 l.Learner_Grade, 
-                l.Learner_CellNo
+                l.Learner_CellNo,
+                l.Status
             FROM 
                 Learner l
             INNER JOIN 
@@ -152,11 +163,11 @@ const Learner = {
             if (err) return callback(err);
             callback(null, results);
         });
+        
     },
 
     deleteLearner: (learnerId, callback) => {
         const sql = 'DELETE FROM learner WHERE Learner_ID = ?';
-        console.log(sql, learnerId)
         connection.query(sql, [learnerId], (err, result) => {
             if (err) return callback(err);
             callback(null, result);
