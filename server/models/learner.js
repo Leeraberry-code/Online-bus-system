@@ -10,18 +10,18 @@ const Learner = {
         });
     },
 
-    getLearnerByIdAndParentId: (learnerId, parentId, callback) => {
-        const sql = `
-        SELECT l.* 
-        FROM learner l
-        JOIN Parent_Student_App_Reg psar ON l.Learner_ID = psar.Learner_ID
-        WHERE l.Learner_ID = ? AND psar.Parent_ID = ?;
-        `;
-        connection.query(sql, [learnerId, parentId], (err, result) => {
-            if (err) return callback(err);
-            callback(null, result.length ? result[0] : null); // Return null if not found
-        });
-    },
+    // getLearnerByIdAndParentId: (learnerId, parentId, callback) => {
+    //     const sql = `
+    //     SELECT l.* 
+    //     FROM learner l
+    //     JOIN Parent_Student_App_Reg psar ON l.Learner_ID = psar.Learner_ID
+    //     WHERE l.Learner_ID = ? AND psar.Parent_ID = ?;
+    //     `;
+    //     connection.query(sql, [learnerId, parentId], (err, result) => {
+    //         if (err) return callback(err);
+    //         callback(null, result.length ? result[0] : null); // Return null if not found
+    //     });
+    // },
     
 
     createLearner: (data, callback) => {
@@ -144,20 +144,20 @@ const Learner = {
             FROM 
                 Learner l
             INNER JOIN 
-                Parent_Student_App_Reg psar ON l.Learner_ID = psar.Learner_ID
+                parent_student_app_reg psar ON l.Learner_ID = psar.Learner_ID
             WHERE 
                 psar.Parent_ID = ?
         `;
-        
         connection.query(sql, [parentId], (err, results) => {
             if (err) return callback(err);
             callback(null, results);
         });
     },
 
-    deleteAdmin: (id, callback) => {
+    deleteLearner: (learnerId, callback) => {
         const sql = 'DELETE FROM learner WHERE Learner_ID = ?';
-        connection.query(sql, [id], (err, result) => {
+        console.log(sql, learnerId)
+        connection.query(sql, [learnerId], (err, result) => {
             if (err) return callback(err);
             callback(null, result);
         });

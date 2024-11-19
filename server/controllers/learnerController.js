@@ -14,27 +14,27 @@ exports.getAllLearners = async (req, res) => {
     }
 };
 
-exports.getLearnersByParentId = async (req, res) => {
-    try {
-        const parentId = req.params.parentId; // Get parentId from the URL parameters
-        const learners = await new Promise((resolve, reject) => {
-            Learner.getLearnersByParentId(parentId, (err, result) => {
-                if (err) return reject(err);
-                resolve(result);
-            });
-        });
+// exports.getLearnersByParentId = async (req, res) => {
+//     try {
+//         const parentId = req.params.parentId; // Get parentId from the URL parameters
+//         const learners = await new Promise((resolve, reject) => {
+//             Learner.getLearnersByParentId(parentId, (err, result) => {
+//                 if (err) return reject(err);
+//                 resolve(result);
+//             });
+//         });
 
-        // Respond with the learners or a 404 if none are found.
-        if (!learners || learners.length === 0) {  // Handle both null and empty array
-          return res.status(404).json({ message: "No learners found for this parent." });
-        }
-        res.json(learners);
+//         // Respond with the learners or a 404 if none are found.
+//         if (!learners || learners.length === 0) {  // Handle both null and empty array
+//           return res.status(404).json({ message: "No learners found for this parent." });
+//         }
+//         res.json(learners);
 
-    } catch (err) {
-        console.error("Error retrieving learners by parent ID:", err);
-        res.status(500).json({ message: "Server error. Please try again later." });
-    }
-};
+//     } catch (err) {
+//         console.error("Error retrieving learners by parent ID:", err);
+//         res.status(500).json({ message: "Server error. Please try again later." });
+//     }
+// };
 
 exports.getLearnerById = async (req, res) => {
     try {
@@ -61,7 +61,8 @@ exports.getLearnerById = async (req, res) => {
 
 exports.getLearnersByParentId = async (req, res) => {
     try {
-        const { parentId } = req.params;
+        const parentId  = req.params.parentId;
+        //console.log("Parent ID:", parentId)
         const learners = await new Promise((resolve, reject) => {
             Learner.getLearnersByParentId(parentId, (err, result) => {
                 if (err) return reject(err);
@@ -71,6 +72,7 @@ exports.getLearnersByParentId = async (req, res) => {
 
         if (learners.length === 0) {
             return res.status(404).json({ message: "No learners found for this parent." });
+            
         }
 
         res.json(learners);
@@ -120,9 +122,9 @@ exports.updateLearner = async (req, res) => {
 
 exports.deleteLearner = async (req, res) => {
     try {
-        const { id } = req.params;
+        const learnerId  = req.params.learnerId;
         const result = await new Promise((resolve, reject) => {
-            Learner.deleteLearner(id, (err, result) => {
+            Learner.deleteLearner(learnerId, (err, result) => {
                 if (err) reject(err);
                 resolve(result);
             });
