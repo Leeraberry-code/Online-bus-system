@@ -16,32 +16,36 @@ export default function ParentDashboard() {
     Learner_Grade: "",
   });
 
-  // Fetch learners associated with the logged-in parent
-  const fetchStudents = async () => {
+  // Fetch learners from the server
+  const fetchStudents = async (refresh = false) => {
     try {
-      const user_id = localStorage.getItem("user_id"); // Get parent ID from localStorage
+      const user_id = localStorage.getItem("user_id");
       if (!user_id) throw new Error("Parent ID not found. Please log in again.");
 
+      if (refresh) setLoading(true);
+
       const response = await axios.get(`${baseUrl}/learner/learners/parent/${user_id}`);
-      if (response.status === 200 && response.data.length > 0) {
-        setStudents(response.data);
+      if (response.status === 200) {
+        setStudents(response.data);  
       } else {
-        setStudents([]); // Handle empty array response
+        setError("Failed to fetch learners.");
+        console.log("Error fetching learners:", response.status, response.data);
+        setStudents([]);
       }
     } catch (err: any) {
-      setError(err.message || "Failed to fetch learners.");
+      setError(err?.response?.data?.message || err.message || "Failed to fetch learners."); // Show specific error from server if available
     } finally {
       setLoading(false);
     }
   };
 
+  // Handle learner deletion
   const handleDeleteLearner = async (learnerId: number) => {
     if (!window.confirm("Are you sure you want to withdraw this application?")) return;
 
     try {
       const response = await axios.delete(`${baseUrl}/learner/learners/${learnerId}`);
       if (response.status === 200) {
-        // Remove the deleted learner from the state
         setStudents((prev) => prev.filter((learner) => learner.Learner_ID !== learnerId));
         alert("Application withdrawn successfully.");
       }
@@ -50,46 +54,61 @@ export default function ParentDashboard() {
     }
   };
 
- const handleFormSubmit = async (e: React.FormEvent) => {
+  // Handle new learner form submission
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const tempId = 'temp-' + Date.now();
+
+    const user_id = localStorage.getItem("user_id");
+    if (!user_id) {
+      setError("Parent ID not found. Please log in again.");
+      return;
+    }
+
+    const newLearnerOptimistic = {
+      ...newLearner,
+      Learner_ID: null, // No temporary ID
+      Parent_ID: parseInt(user_id, 10),
+      Status: "Waitlisted",
+      pending: true, // Visual indicator for a pending state
+    };
+
+    // Optimistically add the learner to the state
+    setStudents((prev) => [...prev, newLearnerOptimistic]);
+    setShowForm(false);
+    setNewLearner({
+      Learner_Name: "",
+      Learner_Surname: "",
+      Learner_CellNo: "",
+      Learner_Grade: "",
+    });
 
     try {
-        const user_id = localStorage.getItem("user_id"); // Declare user_id here
-        if (!user_id) throw new Error("Parent ID not found. Please log in again.");
+      const response = await axios.post(`${baseUrl}/learner/learners`, {
+        ...newLearner,
+        Parent_ID: parseInt(user_id, 10),
+        Status: "Waitlisted",
+      });
 
-
-        // Optimistically update the UI with a temporary ID.  Now user_id is available
-        const newStudent = {...newLearner, Learner_ID: tempId, Parent_ID: parseInt(user_id, 10), Status:"Waitlisted"};
-        setStudents((prev) => [...prev, newStudent]);
-        setShowForm(false);
-        setNewLearner({ Learner_Name: "", Learner_Surname: "", Learner_CellNo: "", Learner_Grade: "" });
-
-
-
-        const response = await axios.post(`${baseUrl}/learner/learners`, {
-            ...newLearner,
-            Parent_ID: parseInt(user_id, 10), // Use user_id here
-            Status: "Waitlisted",
-        });
-
-        if (response.status === 201) {
-            setStudents(prev => prev.filter(s => s.Learner_ID !== tempId).concat(response.data));
-        }
+      if (response.status === 201) {
+        // Refresh the entire list after receiving backend data
+        fetchStudents(true);
+      }
     } catch (err: any) {
-        setError(err.message || "Failed to create learner.");
-        // No change needed here, as tempId is still in scope
-        if (tempId) { // check if tempId was assigned a value in try block
-          setStudents(prev => prev.filter(s => s.Learner_ID !== tempId));
-        }
+      setError(err.message || "Failed to create learner.");
+      setStudents((prev) =>
+        prev.filter((s) => s.Learner_Name !== newLearnerOptimistic.Learner_Name)
+      );
     }
-};
+  };
 
-
-
-  // Fetch learners on component mount
+  // Fetch learners on component mount and set up interval polling
   useEffect(() => {
     fetchStudents();
+    const interval = setInterval(() => {
+      fetchStudents(); // Fetch updated learners every 30 seconds
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -172,20 +191,14 @@ export default function ParentDashboard() {
                 <th className="pb-3">Status</th>
               </tr>
             </thead>
-
-          
-
             <tbody>
-              
               {loading ? (
                 <tr>
                   <td colSpan={6} className="text-center py-4">Loading...</td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={6} className="text-center text-red-500 py-4">
-                    {error}
-                  </td>
+                  <td colSpan={6} className="text-center text-red-500 py-4">{error}</td>
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
@@ -193,14 +206,16 @@ export default function ParentDashboard() {
                 </tr>
               ) : (
                 students.map((student) => (
-                  <tr key={student.Learner_ID} className="border-b hover:bg-gray-100">
-                    <td className="py-3">{student.Learner_ID}</td>
+                  <tr
+                    key={student.Learner_ID || student.Learner_Name}
+                    className={`border-b hover:bg-gray-100 ${student.pending ? "opacity-50" : ""}`}
+                  >
+                    <td className="py-3">{student.Learner_ID || "Pending..."}</td>
                     <td className="py-3">{student.Learner_Name}</td>
                     <td className="py-3">{student.Learner_Surname}</td>
                     <td className="py-3">{student.Learner_CellNo}</td>
                     <td className="py-3">{student.Learner_Grade}</td>
                     <td className="py-3">{student.Status}</td>
-
                     <td className="py-3">
                       <button
                         onClick={() => handleDeleteLearner(student.Learner_ID)}

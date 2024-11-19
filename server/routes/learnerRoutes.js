@@ -8,6 +8,6 @@ router.get('/learners/:id', learnerController.getLearnerById);
 router.get('/learners/parent/:parentId', learnerController.getLearnersByParentId);
 router.post('/learners', learnerController.createLearner);
 router.put('/learners/:id', learnerController.updateLearner);
-router.delete('/learners/:id', learnerController.deleteLearner);
+router.delete('/learners/:learnerId', learnerController.deleteLearner);
 
 module.exports = router;
