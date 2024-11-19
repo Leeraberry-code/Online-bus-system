@@ -30,7 +30,7 @@ const Admin = {
     updateAdmin: (id, data, callback) => {
         const { Parent_ID, Learner_ID, Admin_Initials, Admin_Surname, Admin_Passcode, Admin_Email } = data;
         const sql = 'UPDATE admin SET Parent_ID = ?, Learner_ID = ?, Admin_Initials = ?, Admin_Surname = ?, Admin_Passcode = ?, Admin_Email = ? WHERE Admin_ID = ?';
-        connection.query(sql, [Parent_ID, Learner_ID, Admin_Initials, Admin_Surname, Admin_Passcode, Admin_Email, id], (err, result) => {
+        connection.query(sql, [Parent_ID, Learner_ID, Admin_Initials, Admin_Surname, passcode, email, id], (err, result) => {
             if (err) return callback(err);
             callback(null, result);
         });
